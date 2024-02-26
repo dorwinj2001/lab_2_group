@@ -1,2 +1,2 @@
 # lab_2_group
-The purpose of lab_2_group is to be able to collaborate with each other to complete the Battlesnake Lab for Artificial intelligence
+The purpose of this repository is to be able to collaborate with each other to complete the Battlesnake Lab for Artificial intelligence
