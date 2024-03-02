@@ -109,13 +109,13 @@ def evaluation_function(game_state:typing.Dict, safe_moves, food):
     safe_moves_count = sum(isSafe for isSafe in safe_moves.values())
     score += safe_moves_count
 
-    # Optionally, penalize being close to the board edges
+   
     edge_margin = 2  # Number of cells from edge to consider safe
     if my_head["x"] <= edge_margin or my_head["x"] >= board_width - 1 - edge_margin or \
             my_head["y"] <= edge_margin or my_head["y"] >= board_height - 1 - edge_margin:
         score -= 10  # Penalize being close to the edges
 
-    # Optionally, reward moving towards food
+    
    
     return score
 
