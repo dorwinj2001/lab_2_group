@@ -94,30 +94,8 @@ def move(game_state: typing.Dict) -> typing.Dict:
 
 
 
-def evaluation_function(game_state:typing.Dict, safe_moves, food):
-    score = 0
-
-    # Get information from the game state
-    my_snake_id = game_state["you"]["id"]
-    my_snake_length = len(game_state["you"]["body"])
-    my_head = game_state["you"]["body"][0]
-    board_width = game_state["board"]["width"]
-    board_height = game_state["board"]["height"]
-    other_snakes = [snake for snake in game_state["board"]["snakes"] if snake["id"] != my_snake_id]
-
-    # Evaluate based on number of safe moves
-    safe_moves_count = sum(isSafe for isSafe in safe_moves.values())
-    score += safe_moves_count
-
-   
-    edge_margin = 2  # Number of cells from edge to consider safe
-    if my_head["x"] <= edge_margin or my_head["x"] >= board_width - 1 - edge_margin or \
-            my_head["y"] <= edge_margin or my_head["y"] >= board_height - 1 - edge_margin:
-        score -= 10  # Penalize being close to the edges
-
+def evaluation_function(game_state:typing.Dict):
     
-   
-    return score
 
 
 
