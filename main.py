@@ -23,8 +23,8 @@ def info() -> typing.Dict:
 
     return {
         "apiversion": "1",
-        "author": "",  # TODO: Your Battlesnake Username
-        "color": "#888888",  # TODO: Choose color
+        "author": "Group9",  # TODO: Your Battlesnake Username
+        "color": "#355e3b",  # TODO: Choose color
         "head": "default",  # TODO: Choose head
         "tail": "default",  # TODO: Choose tail
     }
@@ -44,12 +44,13 @@ def end(game_state: typing.Dict):
 # Valid moves are "up", "down", "left", or "right"
 # See https://docs.battlesnake.com/api/example-move for available data
 def move(game_state: typing.Dict) -> typing.Dict:
-
-   is_move_safe = {"up": True, "down": True, "left": True, "right": True}
+    is_move_safe = {"up": True, "down": True, "left": True, "right": True}
 
     # We've included code to prevent your Battlesnake from moving backwards
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
     my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
+    width = game_state["board"]["width"]
+    height = game_state["board"]["height"]
 
     if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
         is_move_safe["left"] = False
@@ -61,9 +62,6 @@ def move(game_state: typing.Dict) -> typing.Dict:
         is_move_safe["up"] = False
 
     # Extract board dimensions
-    width = game_state["board"]["width"]
-    height = game_state["board"]["height"]
-
     head_x = game_state["you"]["head"]["x"]
     head_y = game_state["you"]["head"]["y"]
 
@@ -81,10 +79,17 @@ def move(game_state: typing.Dict) -> typing.Dict:
         possible_moves.remove("up")
 
     # Are there any safe moves left?
+    visited_positions = set()
+    for segment in game_state["you"]["body"]:
+        visited_positions.add((segment["x"], segment["y"]))
+
     safe_moves = []
-    for move, isSafe in is_move_safe.items():
-        if isSafe and move in possible_moves:  # Check if move is both safe and possible
+    for move in possible_moves:
+        next_position = calculate_next_position(my_head, move)
+        if is_move_within_bounds(next_position, game_state) and not is_move_colliding(next_position, visited_positions):
             safe_moves.append(move)
+
+    print("Safe moves:", safe_moves)
 
     if len(safe_moves) == 0:
         print(f"MOVE {game_state['turn']
@@ -98,12 +103,30 @@ def move(game_state: typing.Dict) -> typing.Dict:
 
     return {"move": next_move}
 
-def evaluation_function(game_state:typing.Dict):
-    pass
+
+def calculate_next_position(head: dict, move: str) -> typing.Tuple[int, int]:
+    if move == "up":
+        return head["x"], head["y"] + 1
+    elif move == "down":
+        return head["x"], head["y"] - 1
+    elif move == "left":
+        return head["x"] - 1, head["y"]
+    elif move == "right":
+        return head["x"] + 1, head["y"]
 
 
+def is_move_within_bounds(position: typing.Tuple[int, int], game_state: typing.Dict) -> bool:
+    width = game_state["board"]["width"]
+    height = game_state["board"]["height"]
+    return 0 <= position[0] < width and 0 <= position[1] < height
+
+
+def is_move_colliding(position: typing.Tuple[int, int], visited_positions: set) -> bool:
+    return position in visited_positions
 
 # Start server when `python main.py` is run
+
+
 if __name__ == "__main__":
     from server import run_server
     port = "8000"
@@ -111,4 +134,5 @@ if __name__ == "__main__":
         if sys.argv[i] == '--port':
             port = sys.argv[i+1]
 
-    run_server({"info": info, "start": start, "move": move, "end": end, "port": port})
+    run_server({"info": info, "start": start,
+               "move": move, "end": end, "port": port})
