@@ -88,6 +88,7 @@ def move(game_state: typing.Dict) -> typing.Dict:
         next_position = calculate_next_position(my_head, move)
         if is_move_within_bounds(next_position, game_state) and not is_move_colliding(next_position, visited_positions):
             safe_moves.append(move)
+    
 
     print("Safe moves:", safe_moves)
 
@@ -130,10 +131,11 @@ def evaluation_function(game_state:typing.Dict)->float:
     my_head_y = game_state["you"]["body"][0]["y"]
 
     food_distance = []
-    for food in game_state["food"]:
-        food_distances.append(abs(food["x"] - my_head_x)) + abs(food["y"])
-    if food_distances:
-         min_food_distance = min(food_distances)
+    if "food" in game_state:
+         for food in game_state["food"]:
+            food_distances.append(abs(food["x"] - my_head_x) + abs(food["y"] - my_head_y))
+    if food_distance:
+        min_food_distance = min(food_distance)
     else:
         min_food_distance = 0
     
@@ -152,8 +154,49 @@ def evaluation_function(game_state:typing.Dict)->float:
     # You can adjust the weights for each factor according to your strategy
     evaluation_score = 0.5 * health - 0.2 * min_food_distance - 0.3 * min_enemy_head_distance
 
-   return evaluation_score
+    return evaluation_score
 
+def choose_best_move(game_state: typing.Dict, moves: typing.List[str]) -> str:
+    best_move = moves[0]  # Default to the first move
+    best_score = float("-inf")
+
+    for move in moves:
+        # Simulate the game state after making each move
+        simulated_state = simulate_move(game_state, move)
+
+        # Evaluate the simulated game state
+        score = evaluation_function(simulated_state)
+
+        # Update the best move if the current move has a higher score
+        if score > best_score:
+            best_move = move
+            best_score = score
+
+    return best_move
+def simulate_move(game_state: typing.Dict, move: str) -> typing.Dict:
+    # Create a copy of the game state
+    simulated_state = game_state.copy()
+
+    # Update the simulated game state according to the given move
+    my_snake = simulated_state["you"]
+    my_head = my_snake["body"][0]
+
+    if move == "up":
+        new_head = {"x": my_head["x"], "y": my_head["y"] + 1}
+    elif move == "down":
+        new_head = {"x": my_head["x"], "y": my_head["y"] - 1}
+    elif move == "left":
+        new_head = {"x": my_head["x"] - 1, "y": my_head["y"]}
+    elif move == "right":
+        new_head = {"x": my_head["x"] + 1, "y": my_head["y"]}
+
+    # Update snake's body
+    my_snake["body"] = [new_head] + my_snake["body"][:-1]
+
+    # Update the game state with the new snake position
+    simulated_state["you"] = my_snake
+
+    return simulated_state
 
 if __name__ == "__main__":
     from server import run_server
