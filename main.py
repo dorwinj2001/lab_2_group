@@ -124,7 +124,35 @@ def is_move_within_bounds(position: typing.Tuple[int, int], game_state: typing.D
 def is_move_colliding(position: typing.Tuple[int, int], visited_positions: set) -> bool:
     return position in visited_positions
 
-# Start server when `python main.py` is run
+def evaluation_function(game_state:typing.Dict)->float:
+    health = game_state["you"]["health"]
+    my_head_x = game_state["you"]["body"][0]["x"]
+    my_head_y = game_state["you"]["body"][0]["y"]
+
+    food_distance = []
+    for food in game_state["food"]:
+        food_distances.append(abs(food["x"] - my_head_x)) + abs(food["y"])
+    if food_distances:
+         min_food_distance = min(food_distances)
+    else:
+        min_food_distance = 0
+    
+    enemy_head_distances = []
+    for snake in game_state["board"]["snakes"]:
+        if snake["id"] != game_state["you"]["id"]:
+            enemy_head_x = snake["body"][0]["x"]
+            enemy_head_y = snake["body"][0]["y"]
+            enemy_head_distances.append(abs(enemy_head_x - my_head_x) + abs(enemy_head_y - my_head_y))
+    if enemy_head_distances:
+        min_enemy_head_distance = min(enemy_head_distances)
+    else:
+        min_enemy_head_distance = 0
+    
+    # Calculate the overall evaluation score
+    # You can adjust the weights for each factor according to your strategy
+    evaluation_score = 0.5 * health - 0.2 * min_food_distance - 0.3 * min_enemy_head_distance
+
+   return evaluation_score
 
 
 if __name__ == "__main__":
