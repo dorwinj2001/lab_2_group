@@ -93,8 +93,7 @@ def move(game_state: typing.Dict) -> typing.Dict:
     print("Safe moves:", safe_moves)
 
     if len(safe_moves) == 0:
-        print(f"MOVE {game_state['turn']
-                      }: No safe moves detected! Moving down")
+        print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
         return {"move": "down"}
 
     # Choose a random move from the safe ones
@@ -156,47 +155,93 @@ def evaluation_function(game_state:typing.Dict)->float:
 
     return evaluation_score
 
-def choose_best_move(game_state: typing.Dict, moves: typing.List[str]) -> str:
-    best_move = moves[0]  # Default to the first move
-    best_score = float("-inf")
+class Node:
+    def __init__(self, pos, parent=None):
+        self.parent = parent
+        self.pos = pos
+        self.f = 0
+        self.g = 0
+        self.h = 0
 
-    for move in moves:
-        # Simulate the game state after making each move
-        simulated_state = simulate_move(game_state, move)
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-        # Evaluate the simulated game state
-        score = evaluation_function(simulated_state)
+def get_neighbors(position, game_state):
+    neighbors = []
+    directions = [('up', (0, -1)), ('down', (0, 1)), ('left', (-1, 0)), ('right', (1, 0))]
+    for direction, (dx, dy) in directions:
+        new_pos = (position[0] + dx, position[1] + dy)
+        if is_move_safe(new_pos, game_state):
+            neighbors.append((new_pos, direction))
+    return neighbors
 
-        # Update the best move if the current move has a higher score
-        if score > best_score:
-            best_move = move
-            best_score = score
+def is_move_safe(position, game_state):
+    x, y = position
+    if x < 0 or x >= game_state["board"]["width"] or y < 0 or y >= game_state["board"]["height"]:
+        return False
+    for snake in game_state["board"]["snakes"]:
+        if position in [(segment["x"], segment["y"]) for segment in snake["body"]]:
+            return False
+    return True
 
-    return best_move
-def simulate_move(game_state: typing.Dict, move: str) -> typing.Dict:
-    # Create a copy of the game state
-    simulated_state = game_state.copy()
+def a_star_search(start, goal, game_state):
+    open_set = {start}
+    came_from = {}
+    g_score = {start: 0}
+    f_score = {start: heuristic(start, goal)}
 
-    # Update the simulated game state according to the given move
-    my_snake = simulated_state["you"]
-    my_head = my_snake["body"][0]
+    while open_set:
+        current = min(open_set, key=lambda pos: f_score.get(pos, float('inf')))
+        if current == goal:
+            path = []
+            while current in came_from:
+                current = came_from[current]
+                path.append(current)
+            return path[::-1]  # Return reversed path
+        open_set.remove(current)
+        for neighbor, direction in get_neighbors(current, game_state):
+            tentative_g_score = g_score[current] + 1
+            if tentative_g_score < g_score.get(neighbor, float('inf')):
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
+                open_set.add(neighbor)
+    return []
 
-    if move == "up":
-        new_head = {"x": my_head["x"], "y": my_head["y"] + 1}
-    elif move == "down":
-        new_head = {"x": my_head["x"], "y": my_head["y"] - 1}
-    elif move == "left":
-        new_head = {"x": my_head["x"] - 1, "y": my_head["y"]}
-    elif move == "right":
-        new_head = {"x": my_head["x"] + 1, "y": my_head["y"]}
+def find_closest_food(my_head, foods):
+    closest_food = None
+    min_distance = float('inf')
+    for food in foods:
+        food_pos = (food["x"], food["y"])
+        distance = heuristic(my_head, food_pos)
+        if distance < min_distance:
+            closest_food = food_pos
+            min_distance = distance
+    return closest_food
 
-    # Update snake's body
-    my_snake["body"] = [new_head] + my_snake["body"][:-1]
+def move(game_state: typing.Dict) -> typing.Dict:
+    my_head = (game_state["you"]["body"][0]["x"], game_state["you"]["body"][0]["y"])
+    foods = game_state["board"]["food"]
+    if foods:
+        goal = find_closest_food(my_head, foods)
+        path = a_star_search(my_head, goal, game_state)
+        if path:
+            next_pos = path[0]
+            direction = get_direction(my_head, next_pos)
+            return {"move": direction}
+    return {"move": "up"}  # Fallback move
 
-    # Update the game state with the new snake position
-    simulated_state["you"] = my_snake
-
-    return simulated_state
+def get_direction(from_pos, to_pos):
+    dx = to_pos[0] - from_pos[0]
+    dy = to_pos[1] - from_pos[1]
+    if dx == 1:
+        return "right"
+    elif dx == -1:
+        return "left"
+    elif dy == 1:
+        return "down"
+    elif dy == -1:
+        return "up"
 
 if __name__ == "__main__":
     from server import run_server
