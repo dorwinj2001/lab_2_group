@@ -183,13 +183,13 @@ def is_move_safe(position, game_state):
     return True
 
 
-def a_star_search(start, goal, game_state):
+def a_star_search(start, goal, game_state): #Minimax algorithm with A* search improvement
     open_set = {start}
     came_from = {}
     g_score = {start: 0}
     f_score = {start: heuristic(start, goal)}
 
-    while open_set:
+    while open_set: 
         current = min(open_set, key=lambda pos: f_score.get(pos, float('inf')))
         if current == goal:
             path = []
