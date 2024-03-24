@@ -141,7 +141,6 @@ def evaluation_function(game_state: typing.Dict) -> float:
         min_enemy_head_distance = 0
 
     # Calculate the overall evaluation score
-    # You can adjust the weights for each factor according to your strategy
     evaluation_score = 0.5 * health - 0.2 * \
         min_food_distance - 0.3 * min_enemy_head_distance
 
@@ -219,19 +218,6 @@ def find_closest_food(my_head, foods):
             closest_food = food_pos
             min_distance = distance
     return closest_food
-
-
-# def move(game_state: typing.Dict) -> typing.Dict:
-    # my_head = (game_state["you"]["body"][0]["x"],
-    # foods = game_state["board"]["food"]
-    # if foods:
-    #  path = a_star_search(my_head, goal, game_state)
-    # if path:
-    # next_pos = path[0]
-    # if is_move_safe(next_pos, game_state):
-    # direction = get_direction(my_head, next_pos)
-    # return {"move": direction}
-   # return {"move": "up"}  # Fallback move
 
 
 def get_direction(from_pos, to_pos):
